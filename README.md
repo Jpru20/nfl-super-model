@@ -1,0 +1,59 @@
+# 🏈 NFL Super Model (Consensus Betting Engine)
+
+This project is an advanced NFL betting prediction engine that combines three distinct modeling approaches into a single **"Consensus"** output. It is designed to detect edge cases where Vegas lines differ significantly from underlying statistical probabilities.
+
+## 🧠 The Architecture (The "Three Brains")
+
+The model does not rely on a single algorithm. Instead, it aggregates three different perspectives:
+
+1.  **XGBoost Model (The Statistician):**
+    * **Weight:** 40%
+    * **Logic:** A regression model trained on thousands of historical games. It analyzes unit-level efficiency (EPA), rest differentials, ELO ratings, and home-field advantage to predict the exact margin of victory.
+
+2.  **Monte Carlo Simulation (The Chaos Engine):**
+    * **Weight:** 40%
+    * **Logic:** Simulates every matchup 2,000 times using "Points Per Drive" and "Pace" distributions. It accounts for variance and randomness that static regression models might miss.
+    * *Note:* Includes an "Injury Dampening" logic (70% dampening) to prevent overreacting to single-player absences.
+
+3.  **Trench Warfare Model (The Edge):**
+    * **Weight:** 20%
+    * **Logic:** A specialized model that evaluates the **Offensive Line vs. Defensive Line** matchup.
+    * **Input:** Aggregates individual player grades (EPA contribution for OL, Pressure Rate for DL) to flag critical mismatches (e.g., "Elite DL vs. Broken OL").
+    * **Output:** Provides a probability boost/penalty based on the likelihood of the QB being under pressure.
+
+---
+
+## 📂 File Structure
+
+### Core Engines
+* `nfl_super_model.py`: **The Master Script.** Fetches live odds, loads all models, runs the consensus logic, and prints the final betting card (Spreads, Totals, and Edges).
+* `nfl_training_pipeline_blind.py`: **The Trainer.** Retrains the XGBoost model using a "Blind Fold" method (preventing data leakage by hiding future stats) to ensure realistic backtesting performance.
+
+### Support Systems
+* `injury_manager.py`: **Smart Caching.** Scrapes and manages injury reports with rate-limit protection (caches data for 6 hours to prevent API bans).
+* `nfl_model_trench.json`: The specific decision tree for the OL/DL trench battles.
+* `data/`: Contains the generated player ratings (`ol_value_ratings.csv`, `dl_value_ratings.csv`).
+
+### Model Assets (.pkl)
+* `nfl_model_blind.pkl`: The trained XGBoost Spread model.
+* `nfl_model_total.pkl`: The trained XGBoost Total model.
+* `current_elo_state_blind.pkl`: The database of current ELO ratings for all 32 teams.
+
+---
+
+## ⚙️ Setup & Installation
+
+### 1. Requirements
+You need Python 3.10+ and the following libraries:
+
+```bash
+pip install pandas numpy xgboost requests nfl_data_py joblib
+
+
+2. API KeysThe model requires a free API key from The Odds API to fetch live lines.Get a key: https://the-odds-api.com/Open nfl_super_model.py and paste your key into the ODDS_API_KEY variable.
+
+🚀 How to Run1. Retrain the Model to update the "Brain" with the latest week's game results:Bashpython3 nfl_training_pipeline_blind.pyGenerate 
+2.Predictions (The Weekly Routine)To see this week's picks, simply run:Bashpython3 nfl_super_model.py
+3.Output: A table showing the XGB prediction, Sim prediction, Consensus line, and the "Edge" against the current Vegas spread.
+
+📊 Reading the OutputColumnMeaningXGBThe predicted margin by the XGBoost engine.SIMThe predicted margin by the Monte Carlo engine.TRNCHThe probability of the Home Team winning the "Trench Battle" (Line of Scrimmage).CONSENSUSThe final weighted spread (The "True Number").PICKThe recommended side to bet.EDGEThe difference between the Consensus and Vegas (Higher = Better Value).AGREE🔥 ALL means all 3 models agree. ✅ means Consensus agrees. ⚠️ means models disagree.ANALYSISContext flags (e.g., 🚨 OL Mismatch, High Tot, Inj 4.5).
