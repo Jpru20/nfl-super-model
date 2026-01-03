@@ -47,7 +47,7 @@ def scrape_cbs_injuries():
         for team_link in soup.find_all('a', href=True):
             if '/nfl/teams/' in team_link['href']:
                 raw_name = team_link.text.strip()
-              if raw_name in team_map:
+                if raw_name in team_map:
                     abbr = team_map[raw_name]
                     if abbr not in injury_dict:
                         injury_dict[abbr] = {} # Changed from list to dict
@@ -96,4 +96,4 @@ if __name__ == "__main__":
     data = scrape_cbs_injuries()
     print("\n--- SAMPLE DATA (DETROIT) ---")
     print(data.get('DET', 'No injuries found'))
-                    abbr = team_map[raw_name]
+    abbr = team_map[raw_name]
